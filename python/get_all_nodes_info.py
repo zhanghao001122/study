@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 import json
-from ansible.plugins.callback import CallbackBase
-from ansible.parsing.dataloader import DataLoader
-from ansible.vars.manager import VariableManager
-from ansible.inventory.manager import InventoryManager
-from ansible.playbook.play import Play
-from ansible.executor.task_queue_manager import TaskQueueManager
-from collections import namedtuple
+import xlwt
+#from ansible.plugins.callback import CallbackBase
+#from ansible.parsing.dataloader import DataLoader
+#from ansible.vars.manager import VariableManager
+#from ansible.inventory.manager import InventoryManager
+#from ansible.playbook.play import Play
+#from ansible.executor.task_queue_manager import TaskQueueManager
+#from collections import namedtuple
+'''
 #实例化解析yml
 loader = DataLoader()
 #实例化资产管理
-'''
-    2.4+的inventory必须有sources参数，参数路径为动态执行的那个脚本！这里很坑我研究了一天！
-'''
+
 inventory = InventoryManager(loader=loader,sources='hosts') 
 #实例化变量管理
 variable_manager = VariableManager(loader=loader,inventory=inventory)
@@ -96,20 +96,46 @@ for host,result in callback.host_failed.items():
     result_raw['failed'][host] = result._result
 
 datas = json.dumps(result_raw,indent=4)
+'''
+json_data = open('json.txt')
+datas = json.load(json_data)
+json_data.close()
 
-title = ['age','birthday','collegeName','degree','gender','graduateTime','graduateYears','idNo','message','name','photo','photoStyle','specialty','startTime','studyResult','studyType','success']
+#title = ['hostname','ipaddress_br_ex','ipaddress_br_fw_admin','ipaddress_br_mgmt','ipaddress_br_storage','blockdevices','blockdevice_vda_size','interfaces','memorytotal','physicalprocessorcount','processor0','virtual','bios_vendor','architecture','productname']
+title = ['hostname',
+         'ipaddress_br_ex',
+         'ipaddress_br_fw_admin',
+         'ipaddress_br_mgmt',
+         'ipaddress_br_storage',
+         'blockdevices',
+         'blockdevice_sda_size',
+         'interfaces',
+         'memorytotal',
+         'physicalprocessorcount',
+         'processor0',
+         'virtual',
+         'bios_vendor',
+         'architecture',
+         'productname']
+
 book = xlwt.Workbook() # 创建一个excel对象
-sheet = book.add_sheet('Sheet1',cell_overwrite_ok=True) # 添加一个sheet页
+sheet = book.add_sheet(u'云平台节点信息',cell_overwrite_ok=True) # 添加一个sheet页
 for i in range(len(title)): # 循环列
-    sheet.write(0,i,title[i]) # 将title数组中的字段写入到0行i列中
+    sheet.write(0,i,title[i]) # 将title数组中的字段写入到0行i列中
 
+count = 0
 
-for i in range(len(datas)):#循环列表，取出每一个用户信息
-    b = datas[i]#第i个用户信息
-    massage = b['data']#得到用户详细信息
-    l = [massage[k] for k in title]#将列表信息与title匹配的字段顺序输出
-    for k1 in range(len(l)): #　循环列表
-        sheet.write(1+i,k1,l[k1]) #　将信息写入第i+1行第k1列中
+for i in datas['success']:#循环列表，取出每一个用户信息
+    count += 1
+    host = datas['success'][i]#第i个用户信息
+    l = []#将列表信息与title匹配的字段顺序输出
+    for key in title:
+        try:
+            l.append(host[key])
+        except:
+            l.append('None')
+    for k1 in range(len(l)): #　循环列表
+        sheet.write(1+count,k1,l[k1]) #　将信息写入第i+1行第k1列中
 book.save('demo.xls')#保存excel
 
 
